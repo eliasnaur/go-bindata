@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -53,13 +54,15 @@ func main() {
 	}
 
 	defer fd.Close()
+	bufFd := bufio.NewWriter(fd)
+	defer bufFd.Flush()
 
 	if *tags != "" {
-		fmt.Fprintf(fd, "// +build %s\n\n", *tags)
+		fmt.Fprintf(bufFd, "// +build %s\n\n", *tags)
 	}
 
 	// Translate binary to Go code.
-	translate(fs, fd, *pkgname, *funcname, *uncompressed, *nomemcopy)
+	translate(fs, bufFd, *pkgname, *funcname, *uncompressed, *nomemcopy)
 
 	// Append the TOC init function to the end of the output file and
 	// write the `bindata-toc.go` file, if applicable.
@@ -72,7 +75,7 @@ func main() {
 			return
 		}
 
-		writeTOCInit(fd, in, *prefix, *funcname)
+		writeTOCInit(bufFd, in, *prefix, *funcname)
 	}
 }
 
